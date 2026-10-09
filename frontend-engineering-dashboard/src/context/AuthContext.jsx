@@ -1,11 +1,11 @@
-import { createContext, useState, useCallback, useMemo } from "react";
-
+import { createContext, useState, useMemo, useEffect, useCallback } from "react";
+import { loginService,logoutService,refreshSessionService } from "../services/authService";
 export const AuthContext= createContext();
 
 export const AuthProvider=({children})=>{
     const [accessToken,setAccessToken]=useState(null);
-    const [user,setUser] = useState();
-    const [loading,setLoading]=useState(true);
+    const [user,setUser] = useState(null);
+    const [isLoading,setIsLoading]=useState(true);
     
     const login = (async(credentials)=>{
         const {accessToken,user}=await loginService(credentials);
@@ -25,9 +25,9 @@ export const AuthProvider=({children})=>{
 
     })
 
-    const refreshSession=(async()=>{
+    const refreshSession=useCallback(async()=>{
         try{
-            const {accessToken, user} = await refreshToken();
+            const {accessToken, user} = await refreshSessionService();
             setAccessToken(accessToken);
             setUser(user);
         }catch(error){
@@ -35,9 +35,9 @@ export const AuthProvider=({children})=>{
             setUser(null);
 
         }finally{
-            setLoading(false);
+            setIsLoading(false);
         }
-    });
+    },[]);
 
     useEffect(()=>{
         refreshSession();
@@ -50,7 +50,7 @@ export const AuthProvider=({children})=>{
         isLoading,
         login,
         logout
-    }),[user,accessToken,loading,login,logout]);
+    }),[user,accessToken,isLoading,login,logout]);
 
     return(
         <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
